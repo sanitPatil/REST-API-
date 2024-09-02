@@ -1,9 +1,10 @@
 import { Request, Response, NextFunction } from 'express'
 import createHttpError from 'http-errors'
 import bcrypt from 'bcrypt'
+import jwt from 'jsonwebtoken'
 import userModel from '../models/user.model'
 import { User } from '../models/user.types.model'
-
+import { config } from '../../config/config'
 const userRegister = async (
   req: Request,
   res: Response,
@@ -28,9 +29,7 @@ const userRegister = async (
 
     const hashPassword = await bcrypt.hash(password, 10)
 
-    let newUser: User
-
-    newUser = await userModel.create({
+    const newUser = await userModel.create({
       name,
       email,
       password: hashPassword,
@@ -44,9 +43,19 @@ const userRegister = async (
       next(error)
     }
 
+    const token = jwt.sign(
+      {
+        _id: newUser._id,
+      },
+      config.JWT_SECRET as string,
+      {
+        expiresIn: config.JWT_EXPIREIN,
+      },
+    )
+
     res.status(200).json({
       message: 'success',
-      id: newUser._id,
+      accessToken: token,
     })
   } catch (err) {
     next(`Error At User Register:: ${err}`)
