@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from 'express'
 import createHttpError from 'http-errors'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
-import userModel from '../models/user.model'
-import { User } from '../models/user.types.model'
+import userModel from '../models/user.model/user.model'
+import { User } from '../models/user.model/user.types.model'
 import { config } from '../../config/config'
 const userRegister = async (
   req: Request,
