@@ -15,16 +15,16 @@ const userRegister = async (
 
     if (!name || !email || !password) {
       const error = createHttpError(400, 'all Fields Required!!!')
-      next(error)
+      return next(error)
     }
 
-    const user = await userModel.find({ email })
+    const user = await userModel.findOne({ email })
     if (user) {
       const error = createHttpError(
         400,
         'User with email already Exist please Login!!!',
       )
-      next(error)
+      return next(error)
     }
 
     const hashPassword = await bcrypt.hash(password, 10)
@@ -36,11 +36,9 @@ const userRegister = async (
     })
 
     if (!newUser) {
-      const error = createHttpError(
-        500,
-        'error while creating user please re-register!!!',
+      return next(
+        createHttpError(500, 'error while creating user please re-register!!!'),
       )
-      next(error)
     }
 
     const token = jwt.sign(
@@ -53,7 +51,7 @@ const userRegister = async (
       },
     )
 
-    res.status(200).json({
+    return res.status(201).json({
       message: 'success',
       accessToken: token,
     })
@@ -62,4 +60,35 @@ const userRegister = async (
   }
 }
 
-export { userRegister }
+const userLogin = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return next(createHttpError(400, 'All fields Required!!!'))
+    }
+
+    const user = await userModel.findOne({ email })
+
+    if (!user) {
+      return next(createHttpError(404, 'User Not Found!!!'))
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, user.password)
+    if (!isPasswordMatch) {
+      return next(createHttpError(400, 'Invalid Password'))
+    }
+
+    const token = jwt.sign({ _id: user._id }, config.JWT_SECRET as string, {
+      expiresIn: config.JWT_EXPIREIN,
+    })
+
+    return res.status(200).json({
+      message: 'sucessfully login',
+      accessToken: token,
+    })
+  } catch (err) {
+    console.log(`Error User Login::${err}`)
+  }
+}
+export { userRegister, userLogin }
