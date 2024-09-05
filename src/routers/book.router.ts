@@ -1,8 +1,7 @@
 import express from 'express'
 import path from 'node:path'
-import { createBook } from '../controllers/book.controller'
+import { createBook, updateBook } from '../controllers/book.controller'
 import multer from 'multer'
-
 import { Authenticate } from '../middlewares/Authenticate'
 const bookRouter = express.Router()
 const uplaod = multer({
@@ -18,5 +17,12 @@ bookRouter.route('/create-book').post(
   createBook,
 )
 
-
+bookRouter.route('/update-book/:bookid').patch(
+  Authenticate,
+  uplaod.fields([
+    { name: 'file', maxCount: 1 },
+    { name: 'coverImage', maxCount: 1 },
+  ]),
+  updateBook,
+)
 export default bookRouter
