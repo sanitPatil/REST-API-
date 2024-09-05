@@ -1,9 +1,11 @@
 import path from 'node:path'
+import fs from 'node:fs'
 import createHttpError from 'http-errors'
 import bookModel from '../models/books.model/book.model'
 import { Book } from '../models/books.model/book.types.model'
 import express, { Request, Response, NextFunction } from 'express'
 import cloudinary from '../utils/Cloudinary'
+import { AuthRequest } from '../middlewares/Authenticate'
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { title, genre, description } = req.body
@@ -25,7 +27,7 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
     //console.log('25 line' + filePath, filename, converImageMime)
 
     // upload coverImage on Cloudinary
-    const uploadRes = await cloudinary.uploader.upload(filePath, {
+    const upload_coverImage = await cloudinary.uploader.upload(filePath, {
       filename_override: filename,
       folder: 'book-cover',
       format: converImageMime,
@@ -45,18 +47,34 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
 
     // console.log(bookFileUploadRes)
 
-    const bookFileUploadResult = await cloudinary.uploader.upload(
-      bookFilePath,
-      {
-        resource_type: 'raw',
-        filename_override: bookFileName,
-        folder: 'book-pdfs',
-        format: 'pdf',
-      },
-    )
+    const upload_file = await cloudinary.uploader.upload(bookFilePath, {
+      resource_type: 'raw',
+      filename_override: bookFileName,
+      folder: 'book-pdfs',
+      format: 'pdf',
+    })
     //console.log(bookFileUploadResult)
-
+    fs.unlinkSync(bookFilePath)
+    fs.unlinkSync(filePath)
     //check
+    const _req = req as AuthRequest
+    //console.log(_req)
+
+    const bookRes = await bookModel.create({
+      title,
+      description,
+      author: _req.userId,
+      genre,
+      coverImage: upload_coverImage.secure_url,
+      file: upload_file.secure_url,
+    })
+
+    if (!bookRes) {
+      next(
+        createHttpError(500, `something went wrong while uploading on cloud`),
+      )
+    }
+
     res.status(200).json({
       mes: 'ok',
     })
