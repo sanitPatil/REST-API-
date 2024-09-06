@@ -43,7 +43,7 @@ This repository demonstrates my skills in building and testing robust REST APIs 
 
 ## Acknowledgements
 
-I would like to express my gratitude to **[Coders Gyan](www.youtube.com/@CodersGyan)**, who guided me throughout the development of this project and helped me understand key concepts of REST API development. Their insights and encouragement have been invaluable in this learning process.
+I would like to express my gratitude to **[Coders Gyan](https://www.youtube.com/@CodersGyan)**, who guided me throughout the development of this project and helped me understand key concepts of REST API development. Their insights and encouragement have been invaluable in this learning process.
 
 
 
