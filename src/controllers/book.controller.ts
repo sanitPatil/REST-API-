@@ -139,24 +139,22 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
       fs.unlinkSync(filePath)
     }
 
-    const bookRes = await bookModel
-      .findOneAndUpdate(
-        { _id: bookupdate._id },
-        {
-          title: title ? title : bookupdate.title,
-          genre: genre ? genre : bookupdate.genre,
-          description: description ? description : bookupdate.description,
-          author: userId,
-          coverImage: completedCoverImage
-            ? completedCoverImage
-            : bookupdate.coverImage,
-          file: completeFile ? completeFile : bookupdate.file,
-        },
-        {
-          new: true,
-        },
-      )
-      .select('_id')
+    const bookRes = await bookModel.findOneAndUpdate(
+      { _id: bookupdate._id },
+      {
+        title: title ? title : bookupdate.title,
+        genre: genre ? genre : bookupdate.genre,
+        description: description ? description : bookupdate.description,
+        author: userId,
+        coverImage: completedCoverImage
+          ? completedCoverImage
+          : bookupdate.coverImage,
+        file: completeFile ? completeFile : bookupdate.file,
+      },
+      {
+        new: true,
+      },
+    )
 
     if (!bookRes) {
       return next(createHttpError(500, `failed to store on cloud `))
@@ -164,10 +162,50 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 
     return res.status(200).json({
       message: 'ok',
-      id: bookRes,
+      bookRes,
     })
   } catch (err) {
     throw createHttpError(500, `failed to update book ${err}`)
   }
 }
-export { createBook, updateBook }
+
+const getSingleBook = async (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  try {
+    const { bookId } = req.params
+    if (!bookId) {
+      return next(createHttpError(400, 'book id required '))
+    }
+
+    const res = await bookModel.findOne({ _id: bookId })
+
+    if (!res) {
+      return next(createHttpError(404, 'book not found '))
+    }
+
+    return res.status(200).json({
+      message: 'ok',
+      res,
+    })
+  } catch (err) {
+    return next(createHttpError(500, `failed to get book${err}`))
+  }
+}
+
+const getAllBooks = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const res = await bookModel.find()
+    if (!res) return next(createHttpError(500, `failed to load`))
+    return res.status(200).json({
+      message: 'ok',
+      res,
+    })
+  } catch (err) {
+    return next(createHttpError(500, 'failed to load all books'))
+  }
+}
+
+export { createBook, updateBook, getSingleBook, getAllBooks }
