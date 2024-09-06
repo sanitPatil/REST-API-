@@ -112,7 +112,7 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
 
       const res = await cloudinary.uploader.upload(filePath, {
         filename_override: fileName,
-        folder: 'book-covers',
+        folder: 'book-cover',
         format: coverImageMimeTime,
       })
 
@@ -139,6 +139,9 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
       fs.unlinkSync(filePath)
     }
 
+    const temp_coverImage = bookupdate.coverImage
+    const temp_file = bookupdate.file
+
     const bookRes = await bookModel.findOneAndUpdate(
       { _id: bookupdate._id },
       {
@@ -159,7 +162,14 @@ const updateBook = async (req: Request, res: Response, next: NextFunction) => {
     if (!bookRes) {
       return next(createHttpError(500, `failed to store on cloud `))
     }
+    const cover = temp_coverImage.split('/')
+    const coverPublicId = cover.at(-2) + '/' + cover.at(-1)
 
+    const file = temp_file.split('/')
+    const filePublicId = file.at(-2) + '/' + file.at(-1)
+
+    await cloudinary.uploader.destroy(coverPublicId)
+    await cloudinary.uploader.destroy(filePublicId)
     return res.status(200).json({
       message: 'ok',
       bookRes,
@@ -180,15 +190,15 @@ const getSingleBook = async (
       return next(createHttpError(400, 'book id required '))
     }
 
-    const res = await bookModel.findOne({ _id: bookId })
+    const bookRes = await bookModel.findOne({ _id: bookId })
 
-    if (!res) {
+    if (!bookRes) {
       return next(createHttpError(404, 'book not found '))
     }
 
     return res.status(200).json({
       message: 'ok',
-      res,
+      bookRes,
     })
   } catch (err) {
     return next(createHttpError(500, `failed to get book${err}`))
@@ -197,15 +207,50 @@ const getSingleBook = async (
 
 const getAllBooks = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const res = await bookModel.find()
-    if (!res) return next(createHttpError(500, `failed to load`))
+    const bookRes = await bookModel.find()
+    if (!bookRes) return next(createHttpError(500, `failed to load`))
     return res.status(200).json({
       message: 'ok',
-      res,
+      bookRes,
     })
   } catch (err) {
-    return next(createHttpError(500, 'failed to load all books'))
+    return next(createHttpError(500, `failed to load all books${err}`))
   }
 }
 
-export { createBook, updateBook, getSingleBook, getAllBooks }
+const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { bookId } = req.params
+    if (!bookId) return next(createHttpError(400, `please provide book id`))
+
+    const bookRes = await bookModel.findOne({ _id: bookId })
+    if (!bookRes) return next(createHttpError(404, `book not found`))
+
+    const _req = req as AuthRequest
+
+    if (bookRes.author.toString() !== _req.userId) {
+      return next(createHttpError(404, `UnAuthorized access prohibited`))
+    }
+
+    const coverImage = bookRes.coverImage.split('/')
+    const coverImagePublicId = coverImage.at(-2) + '/' + coverImage.at(-1)
+
+    // https://res.cloudinary.com/dgm1vt7qt/image/upload/v1725556576/book-covers/bfoxt0anz1ie9uynsi5i.jpg
+    //https://res.cloudinary.com/dgm1vt7qt/raw/upload/v1725556578/book-pdfs/e5gjgemfokgy0xg1ducj.pdf
+
+    // console.log(typeof filePublicId)
+    const bookFileSplits = bookRes.file.split('/')
+    const bookFilePublicId = bookFileSplits.at(-2) + '/' + bookFileSplits.at(-1)
+    //console.log('bookFilePublicId', bookFilePublicId)
+
+    await cloudinary.uploader.destroy(coverImagePublicId)
+    await cloudinary.uploader.destroy(bookFilePublicId)
+
+    await bookModel.deleteOne({ _id: _req.userId })
+    res.sendStatus(204)
+  } catch (err) {
+    return next(createHttpError(500, `failed to delete book::${err}`))
+  }
+}
+
+export { createBook, updateBook, getSingleBook, getAllBooks, deleteBook }

@@ -2,6 +2,7 @@ import express from 'express'
 import path from 'node:path'
 import {
   createBook,
+  deleteBook,
   getAllBooks,
   getSingleBook,
   updateBook,
@@ -11,7 +12,7 @@ import { Authenticate } from '../middlewares/Authenticate'
 const bookRouter = express.Router()
 const uplaod = multer({
   dest: path.resolve(__dirname, '../../public/data/uploads'),
-  limits: { fileSize: 3e7 }, // 10mb -> 10*1024*1024
+  limits: { fileSize: 1e7 }, // 10mb -> 10*1024*1024
 })
 bookRouter.route('/create-book').post(
   Authenticate,
@@ -32,5 +33,6 @@ bookRouter.route('/update-book/:bookid').patch(
 )
 
 bookRouter.route('/get-book/:bookId').get(getSingleBook)
-bookRouter.route('/get-all-books/').get(getAllBooks)
+bookRouter.route('/get-all-books').get(getAllBooks)
+bookRouter.route('/delete-book/:bookId').delete(Authenticate, deleteBook)
 export default bookRouter

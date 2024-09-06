@@ -41,19 +41,8 @@ const userRegister = async (
       )
     }
 
-    const token = jwt.sign(
-      {
-        _id: newUser._id,
-      },
-      config.JWT_SECRET as string,
-      {
-        expiresIn: config.JWT_EXPIREIN,
-      },
-    )
-
     return res.status(201).json({
       message: 'success',
-      accessToken: token,
     })
   } catch (err) {
     next(`Error At User Register:: ${err}`)
