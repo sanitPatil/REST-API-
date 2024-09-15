@@ -1,4 +1,5 @@
 import express from 'express'
+import cors from 'cors'
 import ApiError from './utils/ApiError'
 import userRouter from './routers/user.router'
 import bookRouter from './routers/book.router'
@@ -12,6 +13,12 @@ const app = express()
 // })
 
 // build in middlewares
+
+app.use(
+  cors({
+    origin: process.env.C_ORIGION,
+  }),
+)
 app.use(
   express.json({
     limit: '16kb',
