@@ -222,6 +222,7 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { bookId } = req.params
     if (!bookId) return next(createHttpError(400, `please provide book id`))
+    //console.log(bookId)
 
     const bookRes = await bookModel.findOne({ _id: bookId })
     if (!bookRes) return next(createHttpError(404, `book not found`))
@@ -231,6 +232,7 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
     if (bookRes.author.toString() !== _req.userId) {
       return next(createHttpError(404, `UnAuthorized access prohibited`))
     }
+    //console.log(bookRes)
 
     const coverImage = bookRes.coverImage.split('/')
     const coverImagePublicId = coverImage.at(-2) + '/' + coverImage.at(-1)
@@ -246,8 +248,10 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
     await cloudinary.uploader.destroy(coverImagePublicId)
     await cloudinary.uploader.destroy(bookFilePublicId)
 
-    await bookModel.deleteOne({ _id: _req.userId })
-    res.sendStatus(204)
+    const delRes = await bookModel.deleteOne({ _id: bookId })
+    //console.log(delRes)
+
+    res.status(204)
   } catch (err) {
     return next(createHttpError(500, `failed to delete book::${err}`))
   }
