@@ -2,11 +2,11 @@ import path from 'node:path'
 import fs from 'node:fs'
 import createHttpError from 'http-errors'
 import bookModel from '../models/books.model/book.model'
-import { Book } from '../models/books.model/book.types.model'
-import express, { Request, Response, NextFunction } from 'express'
+//import { Book } from '../models/books.model/book.types.model'
+import { Request, Response, NextFunction } from 'express'
 import cloudinary from '../utils/Cloudinary'
 import { AuthRequest } from '../middlewares/Authenticate'
-import userModel from '../models/user.model/user.model'
+//import userModel from '../models/user.model/user.model'
 const createBook = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { title, genre, description } = req.body
@@ -86,9 +86,13 @@ const createBook = async (req: Request, res: Response, next: NextFunction) => {
 
 const updateBook = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { title, genre, description } = req.body
     const { bookid } = req.params
+    if (!bookid) {
+      return next(createHttpError(400, 'book id required'))
+    }
     //console.log(bookid)
+
+    const { title, genre, description } = req.body
 
     const _req = req as AuthRequest
     const userId = _req.userId
@@ -248,10 +252,12 @@ const deleteBook = async (req: Request, res: Response, next: NextFunction) => {
     await cloudinary.uploader.destroy(coverImagePublicId)
     await cloudinary.uploader.destroy(bookFilePublicId)
 
-    const delRes = await bookModel.deleteOne({ _id: bookId })
+    await bookModel.deleteOne({ _id: bookId })
     //console.log(delRes)
 
-    res.status(204)
+    res.status(204).json({
+      message: 'successfully delete book',
+    })
   } catch (err) {
     return next(createHttpError(500, `failed to delete book::${err}`))
   }
