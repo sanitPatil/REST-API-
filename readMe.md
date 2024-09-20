@@ -45,4 +45,4 @@ This repository demonstrates my skills in building and testing robust REST APIs 
 
 I would like to express my gratitude to **[Coders Gyan](https://www.youtube.com/@CodersGyan)**, who guided me throughout the development of this project and helped me understand key concepts of REST API development. Their insights and encouragement have been invaluable in this learning process.
 
-**Sanit Patil** - Software Developer | REST API Enthusiast
+**Sanit Patil** - Software Developer | javascript Enthusiast
